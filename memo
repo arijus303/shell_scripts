@@ -1,0 +1,35 @@
+#!/bin/bash
+date=`date`
+storage="$HOME/.rememberfile"
+export EDITOR="vim"
+
+if [[ $# -eq 0 ]]; then
+	echo "script usage: $0 [-l (list)] [-a (add)] [-f some value(find)] [e (edit)] [h (help)]"
+	exit 1
+fi
+
+function write(){
+	echo "Enter the note ending with ^D";
+	echo "---" >> $storage
+	echo "DATE: $date " >> $storage
+	echo -ne "NOTE: " >> $storage
+	cat >> $storage
+	#echo "---" >> $storage
+	echo "Note added to '.rememberfile' @ $storage"
+}
+
+
+while getopts "laf:he" opts; do
+	case $opts in
+		l) less $storage ;;
+		a) write ;;
+		f) cat $storage | grep -i $OPTARG ;;
+		h) echo "script usage: $0 [-l (list)] [-a (add)] [-f somevalue(find)] [e (edit)] [h (help)]";;
+		e) vim $storage ;;
+		\?) echo "Invalid option $OPTARG" 1>&2
+		    exit 1 ;;
+	esac
+done
+
+
+
