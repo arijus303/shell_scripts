@@ -7,8 +7,7 @@ compressProg=(gzipFUNC bzip2FUNC )
 totalFuncNum=${#compressProg[@]}
 testDir="/tmp/compression_test_$$/"
 i=10
-filename="compression_test."
-
+#FILENAME=$1
 #check if file exists
 #ckeck if we have a total space
 
@@ -18,28 +17,28 @@ filename="compression_test."
 
 function gzipFUNC(){
 
-	echo "Gzip - attempting to compress."
+	echo "gzip - attempting to compress: $2"
 	id=$1 
 	gzip -c "$2" > "$testDir$id"
 	STATUS=$?
 	if [[ $STATUS -eq 0 ]];then
-	       echo "Gzip - completed."
+	       echo "gzip - completed."
        	else
-	       echo "Gzip - error while compressing."
+	       echo "gzip - error while compressing."
        	fi	       
 	
 }
 
 function bzip2FUNC(){
 
-	echo "Bzip - attempting to compress."
+	echo "bzip2 - attempting to compress: $2"
 	id=$1 
 	bzip2 -c "$2" > "$testDir$id"
 	STATUS=$?
 	if [[ $STATUS -eq 0 ]];then
-	       echo "Bzip2 - completed."
+	       echo "bzip2 - completed."
        	else
-	       echo "Bzip2 - error while compressing."
+	       echo "bzip2 - error while compressing."
        	fi	       
 	
 }
@@ -51,15 +50,25 @@ id=0
 mkdir -p $testDir
 trap 'rm -rf "$testDir"' EXIT
 
+for FILENAME in $@; do
 
-for func in ${compressProg[@]}; do
+	if [[ -f $FILENAME ]]; then
+
+
+	for func in ${compressProg[@]}; do
 	
-	if [[ -f $1 ]];then
-		$func $id $1
+		$func $id $FILENAME
 		((id++))
-		
+			
+		done
+		#<- write a comparison function and append result to log.
 	else
-		echo "File does not exist!, please check and try again" >&2
-		exit 1
+		echo "File [ $FILENAME ] does not exist!, please check and try again" >&2
+		continue
+	
 	fi
 done
+
+	
+
+	
