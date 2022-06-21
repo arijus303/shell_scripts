@@ -31,8 +31,8 @@ function gzipFUNC(){
 	       echo "$NAME - completed."
        	else
 	       echo "$NAME - error while compressing."
-       	fi	       
-	
+       	fi
+
 }
 
 function bzip2FUNC(){
@@ -41,14 +41,13 @@ function bzip2FUNC(){
 
 	echo "$NAME - attempting to compress: $2"
 	id=$1 
-	bzip2 -c "$2" > "$testDir$id"
+	bzip2 -c "$2" > "$testDir$id" #<-
 	STATUS=$?
 	if [[ $STATUS -eq 0 ]];then
 	       echo "$NAME - completed."
        	else
 	       echo "$NAME - error while compressing."
-       	fi	       
-	
+       	fi
 }
 #######################################################
 #COMPRESSION FUNCTIONS END
@@ -62,13 +61,37 @@ function compare() {
         functionID=`ls -l $testDir | grep $smallest_size | awk '{print $9}'`
 
         
-        echo "Best compression for file $__FILENAME is ${compressProgName[$functionID]}"
+        echo "Best compression for file [ $__FILENAME ] is ${compressProgName[$functionID]}"
+}
+
+function check_for_space(){
+
+	if [[ $counter -eq 0 ]]; then
+	echo -n "Checkig for sufficient space to perform test... "
+
+	local free=`df --total | grep total | awk '{print $4}'`
+	${compressProgName[$1]} -c $2 > /tmp/space_test 
+	local size=$(ls -l /tmp/space_test | awk '{print $5}' )
+	rm /tmp/space_test
+	echo -n "Free space: $free "
+	_ARGV=$(($# - 1))
+	needed_space=$(($size * $totalFuncNum * $_ARGV))
+	echo -n "Space needed(aprox.): $needed_space"
+	res=$(($free > $needed_space))
+		
+		if [[ $res -eq 1 ]];then 
+			echo "[OK]"
+		else 
+			echo "Not enough space to perform compression test, exiting..." 1>&2
+			exit 1
+		fi
+	fi
 }
 
 
-id=0
+counter=0
 mkdir -p $testDir
-trap 'rm -rf "$testDir"' EXIT #clean up after test.
+#trap 'rm -rf "$testDir"' EXIT #clean up after test.
 
 for FILENAME in $@; do
 
@@ -77,9 +100,9 @@ for FILENAME in $@; do
 
 	for func in ${compressProg[@]}; do
 	
-		check_for_space $id #check for space availability
-		$func $id $FILENAME #function call to compress
-		((id++))
+		check_for_space $counter $FILENAME #check for space availability, only run once
+		$func $counter $FILENAME #function call to compress
+		((counter++))
 			
 		done
 		compare $FILENAME 
